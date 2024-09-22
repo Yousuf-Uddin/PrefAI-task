@@ -64,10 +64,10 @@ const PropForm = () => {
   }, [editProp]);
   //Add Prop Logic
   const formHandler = (e) => {
+    e.preventDefault();
     const submitBtn = e.target.querySelector(".btnSubmit");
     submitBtn.disabled = "true";
     submitBtn.style.cursor = "not-allowed";
-    e.preventDefault();
     // console.log(formData);
     editProp ? updateData(formData) : submitData(formData);
     editProp

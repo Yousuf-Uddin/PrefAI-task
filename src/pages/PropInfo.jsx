@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 function PropInfo() {
   const [selectedProp, setselectedProp] = useState();
+  const [taskList, setTaskList] = useState();
   const params = useParams();
   const navigate = useNavigate();
   const propVal = params.propname;
@@ -15,11 +16,12 @@ function PropInfo() {
       setselectedProp(res.data);
     });
   }, []);
-  let propTask = JSON.parse(
-    localStorage.getItem(selectedProp && selectedProp.name + "task")
-  );
 
-  const [tasks, setTasks] = useState([]);
+  useEffect(() => {
+    axios.get(`http://localhost:3000/${propVal}/get`).then((res) => {
+      setTaskList(res.data);
+    });
+  }, []);
 
   //Delete Button Handler
   const deleteHandler = (e) => {
@@ -38,9 +40,9 @@ function PropInfo() {
 
   // Handle updating the task status
   const handleStatusChange = (id, newStatus) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, status: newStatus } : task
+    setTaskList(
+      taskList.map((task) =>
+        task._id === id ? { ...task, taskStatus: newStatus } : task
       )
     );
   };
@@ -88,40 +90,36 @@ function PropInfo() {
           {/* Task List */}
           <div className="my-4 w-fit">
             <h3 className="text-2xl font-bold mb-4">Tasks</h3>
-            {propTask ? (
-              <ul className=" flex gap-4">
-                {propTask.map((task) => {
+            {taskList ? (
+              <ul className=" flex gap-4 flex-wrap">
+                {taskList.map((task, index) => {
                   return (
                     <li
-                      key={task.id}
+                      key={index}
                       className={
-                        task.status === "Pending"
+                        task.taskStatus === "Pending"
                           ? "px-6 py-4 bg-red-600 rounded-md"
-                          : task.status === "Completed"
+                          : task.taskStatus === "Completed"
                           ? "px-6 py-4 bg-green-500 rounded-md"
                           : "px-6 py-4 bg-gray-700 rounded-md"
                       }
                     >
                       <p>
-                        <strong>Task Type:</strong> {task.type}
+                        <strong>Task Type:</strong> {task.taskType}
                       </p>
                       <p>
                         <strong>Due Date:</strong> {task.dueDate}
                       </p>
-                      Task Status Dropdown
                       <div className="mt-2">
-                        <label
-                          className="text-sm font-medium mb-1 mr-2"
-                          htmlFor={`status-${task.id}`}
-                        >
+                        <label className="text-sm font-medium mb-1 mr-2">
                           <strong>Status:</strong>
                         </label>
                         <select
-                          id={`status-${task.id}`}
+                          id={task._id}
                           className="focus:outline-none p-1 bg-inherit border rounded-md shadow-sm"
-                          value={task.status}
+                          value={task.taskStatus}
                           onChange={(e) =>
-                            handleStatusChange(task.id, e.target.value)
+                            handleStatusChange(e.target.id, e.target.value)
                           }
                         >
                           <option

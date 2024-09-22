@@ -1,35 +1,52 @@
+import axios from "axios";
 import { useState } from "react";
-
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 
 const TaskForm = () => {
   const params = useParams();
-  const [tasks, setTasks] = useState([]);
-  const [taskType, setTaskType] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [taskStatus, setTaskStatus] = useState("Pending");
+  const propName = params.propname;
+  const navigate = useNavigate();
+  const [taskData, setTaskData] = useState({
+    propName: propName,
+    taskType: "",
+    dueDate: "",
+    taskStatus: "Pending",
+  });
+  const addTask = async (data) => {
+    try {
+      await axios
+        .post(`http://localhost:3000/${propName}/addTask`, {
+          data,
+        })
+        .then(function (response) {
+          console.log(response.status);
+        });
+    } catch (err) {
+      console.log(err.response.status);
+    }
+  };
+  const handleInput = (e) => {
+    let inputfinder = e.target.id;
+    setTaskData({ ...taskData, [inputfinder]: e.target.value });
+  };
 
   // Handle the submission of the form
   const handleSubmit = (e) => {
     e.preventDefault();
+    const submitBtn = e.target.querySelector(".btnSubmit");
+    submitBtn.disabled = "true";
+    submitBtn.style.cursor = "not-allowed";
 
-    if (!taskType || !dueDate) {
+    if (!taskData.taskType || !taskData.dueDate) {
       alert("Please fill all fields");
       return;
     }
-
-    const newTask = {
-      id: Date.now(),
-      type: taskType,
-      dueDate: dueDate,
-      status: taskStatus, // New status field for tasks
-    };
-
-    setTasks([...tasks, newTask]);
-    localStorage.setItem(params.propname + "task", JSON.stringify(tasks));
-    setTaskType("");
-    setDueDate("");
-    setTaskStatus("Pending"); // Reset status to default
+    addTask(taskData); //adding task to DB
+    toast.success("Task Added.", { autoClose: 1500 });
+    setTimeout(() => {
+      navigate("/propInfo/" + propName);
+    }, 2000);
   };
 
   return (
@@ -37,16 +54,30 @@ const TaskForm = () => {
       {/* Task Form */}
       <h2 className="text-2xl font-bold mb-4">Add Task</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="dueDate">
+            Prop Name:
+          </label>
+          <input
+            id="propName"
+            type="text"
+            disabled
+            className=" bg-gray-900 text-gray-400 hover:cursor-not-allowed focus:outline-none block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+            value={propName}
+          />
+        </div>
         {/* Task Type */}
+
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="taskType">
             Task Type
           </label>
+
           <select
             id="taskType"
             className="focus:outline-none block bg-gray-900 w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={taskType}
-            onChange={(e) => setTaskType(e.target.value)}
+            value={taskData.taskType}
+            onChange={handleInput}
           >
             <option value="">Select a task type</option>
             <option value="Collect Rent">Collect Rent</option>
@@ -64,8 +95,8 @@ const TaskForm = () => {
             id="dueDate"
             type="date"
             className="bg-gray-900 focus:outline-none block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            value={taskData.dueDate}
+            onChange={handleInput}
           />
         </div>
 
@@ -73,15 +104,15 @@ const TaskForm = () => {
         <div>
           <label
             className="block text-sm font-medium mb-1"
-            htmlFor="taskStatus"
+            htmlFor="taskDatatatus"
           >
             Task Status
           </label>
           <select
             id="taskStatus"
             className="bg-gray-900 focus:outline-none block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            value={taskStatus}
-            onChange={(e) => setTaskStatus(e.target.value)}
+            value={taskData.taskDatatatus}
+            onChange={handleInput}
           >
             <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
@@ -90,10 +121,11 @@ const TaskForm = () => {
         </div>
 
         {/* Submit Button */}
+        <ToastContainer position="top-right" />
         <div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            className="btnSubmit w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
           >
             Add Task
           </button>
